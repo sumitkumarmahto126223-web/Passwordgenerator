@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Using Lora for a sophisticated serif look and JetBrains for code */
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono&display=swap');
+        
+        body {
+            font-family: 'Lora', serif;
+            background-color: #f8fafc;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .strength-bar {
+            height: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .custom-checkbox:checked + div {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .custom-checkbox:checked + div svg {
+            display: block;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 p-6 md:p-8">
+        <header class="mb-8 text-center">
+            <!-- Title now uses the theme blue color -->
+            <h1 class="text-3xl font-bold text-blue-600 italic">Password Generator</h1>
+            <p class="text-slate-500 text-sm mt-2 font-sans italic">Create secure, random passwords instantly</p>
+        </header>
+
+        <!-- Result Display -->
+        <div class="relative mb-6">
+            <div id="password-display" class="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 pr-12 text-xl mono text-slate-700 break-all min-h-[64px] flex items-center">
+                ••••••••
+            </div>
+            <button id="copy-btn" class="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-blue-600 transition-colors" title="Copy to clipboard">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </button>
+            <div id="copy-toast" class="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-3 py-1.5 rounded opacity-0 transition-opacity pointer-events-none font-sans">
+                Copied!
+            </div>
+        </div>
+
+        <!-- Strength Indicator -->
+        <div class="mb-8">
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 font-sans">Strength</span>
+                <span id="strength-text" class="text-xs font-bold text-slate-600 uppercase font-sans">Weak</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full overflow-hidden flex gap-1 p-0.5">
+                <div id="bar-1" class="strength-bar flex-1 rounded-full bg-slate-200"></div>
+                <div id="bar-2" class="strength-bar flex-1 rounded-full bg-slate-200"></div>
+                <div id="bar-3" class="strength-bar flex-1 rounded-full bg-slate-200"></div>
+                <div id="bar-4" class="strength-bar flex-1 rounded-full bg-slate-200"></div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="space-y-6">
+            <!-- Length Slider -->
+            <div>
+                <div class="flex justify-between mb-4">
+                    <label class="text-sm font-semibold text-slate-700">Password Length</label>
+                    <span id="length-val" class="text-blue-600 font-bold mono">16</span>
+                </div>
+                <input type="range" id="length-slider" min="4" max="50" value="16" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <!-- Options Grid -->
+            <div class="grid grid-cols-1 gap-4">
+                <label class="flex items-center group cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="opt-uppercase" checked class="sr-only custom-checkbox">
+                        <div class="w-5 h-5 border-2 border-slate-300 rounded transition-all flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    </div>
+                    <span class="ml-3 text-sm text-slate-600 group-hover:text-slate-900 transition-colors font-medium">Include Uppercase</span>
+                </label>
+
+                <label class="flex items-center group cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="opt-lowercase" checked class="sr-only custom-checkbox">
+                        <div class="w-5 h-5 border-2 border-slate-300 rounded transition-all flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    </div>
+                    <span class="ml-3 text-sm text-slate-600 group-hover:text-slate-900 transition-colors font-medium">Include Lowercase</span>
+                </label>
+
+                <label class="flex items-center group cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="opt-numbers" checked class="sr-only custom-checkbox">
+                        <div class="w-5 h-5 border-2 border-slate-300 rounded transition-all flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    </div>
+                    <span class="ml-3 text-sm text-slate-600 group-hover:text-slate-900 transition-colors font-medium">Include Numbers</span>
+                </label>
+
+                <label class="flex items-center group cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="opt-symbols" checked class="sr-only custom-checkbox">
+                        <div class="w-5 h-5 border-2 border-slate-300 rounded transition-all flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    </div>
+                    <span class="ml-3 text-sm text-slate-600 group-hover:text-slate-900 transition-colors font-medium">Include Symbols</span>
+                </label>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error-msg" class="hidden text-xs text-red-500 font-medium text-center font-sans">
+                Please select at least one character type.
+            </div>
+
+            <!-- Generate Button -->
+            <button id="generate-btn" class="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 font-sans">
+                <span>Generate Password</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('password-display');
+        const lengthSlider = document.getElementById('length-slider');
+        const lengthVal = document.getElementById('length-val');
+        const genBtn = document.getElementById('generate-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const toast = document.getElementById('copy-toast');
+        const errorMsg = document.getElementById('error-msg');
+        
+        const opts = {
+            upper: document.getElementById('opt-uppercase'),
+            lower: document.getElementById('opt-lowercase'),
+            num: document.getElementById('opt-numbers'),
+            sym: document.getElementById('opt-symbols')
+        };
+
+        const chars = {
+            upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            lower: 'abcdefghijklmnopqrstuvwxyz',
+            num: '0123456789',
+            sym: '!@#$%^&*()_+-=[]{}|;:,.<>?'
+        };
+
+        function calculateStrength(password) {
+            let score = 0;
+            if (password.length > 8) score++;
+            if (password.length > 12) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+            
+            const bars = [
+                document.getElementById('bar-1'),
+                document.getElementById('bar-2'),
+                document.getElementById('bar-3'),
+                document.getElementById('bar-4')
+            ];
+            const text = document.getElementById('strength-text');
+            
+            bars.forEach(b => b.className = 'strength-bar flex-1 rounded-full bg-slate-200');
+            
+            const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emerald-500'];
+            const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+
+            if (score === 0 && password.length > 0) score = 1;
+
+            for (let i = 0; i < score; i++) {
+                bars[i].classList.remove('bg-slate-200');
+                bars[i].classList.add(colors[score - 1]);
+            }
+            text.innerText = labels[score - 1] || 'Weak';
+            
+            const colorClass = score > 0 ? 'text-' + colors[score-1].split('-')[1] + '-600' : 'text-slate-600';
+            text.className = `text-xs font-bold uppercase ${colorClass}`;
+        }
+
+        function generate() {
+            let pool = '';
+            if (opts.upper.checked) pool += chars.upper;
+            if (opts.lower.checked) pool += chars.lower;
+            if (opts.num.checked) pool += chars.num;
+            if (opts.sym.checked) pool += chars.sym;
+
+            if (pool === '') {
+                errorMsg.classList.remove('hidden');
+                display.innerText = '••••••••';
+                calculateStrength('');
+                return;
+            } else {
+                errorMsg.classList.add('hidden');
+            }
+
+            let length = parseInt(lengthSlider.value);
+            let password = '';
+            
+            const randomValues = new Uint32Array(length);
+            window.crypto.getRandomValues(randomValues);
+
+            for (let i = 0; i < length; i++) {
+                password += pool[randomValues[i] % pool.length];
+            }
+
+            display.innerText = password;
+            display.classList.remove('text-slate-400');
+            display.classList.add('text-slate-700');
+            calculateStrength(password);
+        }
+
+        lengthSlider.addEventListener('input', (e) => {
+            lengthVal.innerText = e.target.value;
+        });
+
+        genBtn.addEventListener('click', generate);
+
+        copyBtn.addEventListener('click', () => {
+            const text = display.innerText;
+            if (text === '••••••••') return;
+
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                toast.classList.remove('opacity-0');
+                setTimeout(() => toast.classList.add('opacity-0'), 2000);
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        });
+
+        window.onload = generate;
+    </script>
+</body>
+</html>
